@@ -70,6 +70,26 @@ background processes after a change. The dashboard is plain Python with no
 build step, and `web/index.html` is a single file with no dependencies and no
 bundler — edit it and reload the page.
 
+## Tests
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+Standard library, no hardware, under a second. They run anywhere `dashboard.py`
+runs, Linux and macOS included.
+
+They deliberately concentrate on the promises above rather than on coverage:
+that a gap stays a gap, that an average is taken over observed time and not
+wall-clock, that a single missed sample is *not* reported as a gap while a real
+pause is, that app shares sum to one with the baseline kept separate, and that
+a torn CSV line is skipped instead of taking the dashboard down. One test is
+named for a bug that actually shipped — a short-lived process reporting 0.0 W
+beside a real peak — so it cannot come back quietly.
+
+If you change any of that behaviour on purpose, change the test in the same
+commit and say why in the message.
+
 ## Style
 
 Match what is already there. PowerShell 5.1 compatible (no `??`, no ternaries),

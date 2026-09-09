@@ -7,6 +7,7 @@
   <img alt="Platform: Windows" src="https://img.shields.io/badge/platform-Windows%2010%20%2F%2011-b73a2a">
   <img alt="PowerShell and Python" src="https://img.shields.io/badge/built%20with-PowerShell%20%2B%20stdlib%20Python-8a6a4f">
   <img alt="No admin rights" src="https://img.shields.io/badge/install-no%20admin%20rights-4a7c59">
+  <img alt="24 tests, standard library" src="https://img.shields.io/badge/tests-24%20passing-4a7c59">
 </p>
 
 # Nabatt · نبط
@@ -98,6 +99,7 @@ Want it self-contained on a USB stick instead? Put an empty file called
 | Open it | **Nabatt** in the Start Menu / Desktop, or click the tray bolt |
 | Pin it to the taskbar | Open it once → right-click its taskbar button → Pin |
 | See it from my phone | `http://<this-pc-ip>:8099` on the same Wi-Fi |
+| Keep it to this machine | `"bind": "localhost"` in `config.json` — see below |
 | Switch light/dark | The **Light / Dark / Auto** control, top right |
 | Open my logs | tray icon → **Open log folder** |
 | Stop it for now | `stop-power-tracking.ps1` |
@@ -218,6 +220,60 @@ Four hidden processes, started at sign-in by the `Nabatt` Run entry →
 `start-power-tracking.ps1` is safe to run twice — it never starts a second copy
 of anything.
 
+### Who can see it
+
+The dashboard has **no authentication**, and by default it answers on every
+interface — that is what makes the phone trick work. It also means anyone on
+the same Wi-Fi can read when your machine was on, what you run, and what you
+pay. Set `"bind": "localhost"` in `config.json` and everything except loopback
+gets a `403`; the app window and tray keep working. Worth doing on any network
+you do not control. [SECURITY.md](SECURITY.md) has the detail.
+
+---
+
+## How it fits together
+
+Two samplers on different clocks, two CSVs, and a reader that joins them only
+when you ask a question. Nothing is aggregated at write time, so a change to
+the maths re-reads history rather than migrating it.
+
+```mermaid
+flowchart LR
+  subgraph sensors ["what the machine reports"]
+    NV["nvidia-smi<br/><i>power.draw</i>"]
+    GE["GPU Engine pid_* counters<br/><i>per-process GPU busy</i>"]
+    PP["Win32_PerfFormattedData<br/><i>per-process CPU</i>"]
+  end
+
+  subgraph loggers ["two samplers, different clocks"]
+    PL["power-logger.ps1<br/>every 10 s"]
+    AL["app-logger.ps1<br/>every 30 s<br/><i>the counter query costs ~2.1 s</i>"]
+  end
+
+  subgraph data ["your data folder"]
+    PC[("power-YYYY-MM.csv")]
+    AC[("apps-YYYY-MM-DD.csv")]
+    CF[["config.json<br/><i>tariff, model, bind</i>"]]
+  end
+
+  DB["dashboard.py<br/><i>joins by timestamp at read time</i>"]
+  UI["web/index.html<br/><i>one file, no dependencies</i>"]
+  TR["tray.py<br/><i>icon + watchdog</i>"]
+
+  NV --> PL
+  GE --> AL
+  PP --> AL
+  PL --> PC
+  AL --> AC
+  PC --> DB
+  AC --> DB
+  CF --> DB
+  DB -->|"JSON on :8099"| UI
+  DB -.->|"health poll"| TR
+  TR -.->|"restarts a dead logger"| PL
+  TR -.-> AL
+```
+
 ---
 
 ## How the numbers are produced
@@ -272,6 +328,7 @@ padded out to fill the wall.
 | `gpu_idle_w` | GPU floor excluded from app attribution |
 | `sample_seconds`, `app_sample_seconds` | 10 s and 30 s |
 | `port` | 8099 |
+| `bind` | `lan` (default, reachable from your phone) or `localhost` |
 
 Your `config.json` lives in `%LOCALAPPDATA%\Nabatt`, not in the program folder —
 the copy shipped with the app is only the default used to seed yours.
@@ -293,6 +350,7 @@ web/Nabatt.ico          app icon, 16-256 px
 tray.py                 tray icon + logger watchdog
 open-app.ps1            opens the dashboard as a Chrome --app window
 make-icon.py            regenerates web/icon.png and web/Nabatt.ico
+tests/                  the maths, tested without hardware
 ```
 
 and in `%LOCALAPPDATA%\Nabatt`:
@@ -417,6 +475,18 @@ one machine. [CONTRIBUTING.md](CONTRIBUTING.md) has the details, including the
 one rule that matters: **Nabatt does not invent data.** Unobserved time is
 reported as a gap, and power that cannot be attributed to a process stays in the
 idle baseline rather than being spread over apps to make the totals look tidy.
+
+```bash
+python -m unittest discover -s tests -v      # 24 tests, stdlib, under a second
+```
+
+The suite exists to hold that rule down: it checks that a gap stays a gap, that
+an average is taken over observed time rather than wall-clock, that one missed
+sample is not a gap while a real pause is, and that app shares sum to one with
+the baseline kept out of them. Run it anywhere — Linux and macOS included.
+
+Security-relevant note before you deploy it anywhere shared:
+[SECURITY.md](SECURITY.md).
 
 ## Licence
 

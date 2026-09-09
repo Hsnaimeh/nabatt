@@ -664,6 +664,19 @@ def api_apps(rng):
 
 
 # --------------------------------------------------------------------------
+# Who is allowed to read your history. The socket stays dual-stack either way
+# -- binding 127.0.0.1 alone would bring back the two-second ::1 stall that
+# DualStackServer exists to avoid -- so "localhost" is enforced on the peer
+# address instead of at the bind.
+LOOPBACK = ("127.0.0.1", "::1", "::ffff:127.0.0.1")
+
+
+def _allowed(peer):
+    if str(cfg().get("bind", "lan")).lower() != "localhost":
+        return True
+    return peer in LOOPBACK or peer.startswith("127.")
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *a):
         pass
@@ -682,6 +695,10 @@ class Handler(BaseHTTPRequestHandler):
         self._send(code, json.dumps(obj), "application/json")
 
     def do_GET(self):
+        if not _allowed(self.client_address[0]):
+            self._send(403, "Nabatt is set to localhost only "
+                            '(bind: "localhost" in config.json).', "text/plain")
+            return
         raw = self.path.split("?", 1)
         path = raw[0]
         # Proper decoding matters: app names carry spaces and brackets, e.g.
