@@ -239,37 +239,19 @@ the maths re-reads history rather than migrating it.
 
 ```mermaid
 flowchart LR
-  subgraph sensors ["what the machine reports"]
-    NV["nvidia-smi<br/><i>power.draw</i>"]
-    GE["GPU Engine pid_* counters<br/><i>per-process GPU busy</i>"]
-    PP["Win32_PerfFormattedData<br/><i>per-process CPU</i>"]
-  end
+  NV["nvidia-smi<br/><i>power.draw — measured</i>"] --> PL
+  GE["GPU Engine pid_*<br/><i>per-process GPU busy</i>"] --> AL
+  PP["Win32_PerfFormattedData<br/><i>per-process CPU</i>"] --> AL
 
-  subgraph loggers ["two samplers, different clocks"]
-    PL["power-logger.ps1<br/>every 10 s"]
-    AL["app-logger.ps1<br/>every 30 s<br/><i>the counter query costs ~2.1 s</i>"]
-  end
+  PL["power-logger.ps1<br/><b>every 10 s</b>"] --> PC[("power-YYYY-MM.csv")]
+  AL["app-logger.ps1<br/><b>every 30 s</b><br/><i>counter query costs ~2.1 s</i>"] --> AC[("apps-YYYY-MM-DD.csv")]
 
-  subgraph data ["your data folder"]
-    PC[("power-YYYY-MM.csv")]
-    AC[("apps-YYYY-MM-DD.csv")]
-    CF[["config.json<br/><i>tariff, model, bind</i>"]]
-  end
-
-  DB["dashboard.py<br/><i>joins by timestamp at read time</i>"]
-  UI["web/index.html<br/><i>one file, no dependencies</i>"]
-  TR["tray.py<br/><i>icon + watchdog</i>"]
-
-  NV --> PL
-  GE --> AL
-  PP --> AL
-  PL --> PC
-  AL --> AC
   PC --> DB
   AC --> DB
-  CF --> DB
-  DB -->|"JSON on :8099"| UI
-  DB -.->|"health poll"| TR
+  CF["config.json<br/><i>tariff · model · bind</i>"] --> DB
+
+  DB["dashboard.py<br/><i>joins them by timestamp<br/>at read time</i>"] -->|"JSON on :8099"| UI["web/index.html<br/><i>one file, no dependencies</i>"]
+  DB -.->|"health poll"| TR["tray.py<br/><i>icon + watchdog</i>"]
   TR -.->|"restarts a dead logger"| PL
   TR -.-> AL
 ```
