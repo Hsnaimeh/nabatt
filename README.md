@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/banner.png" alt="Nabatt" width="100%">
+</p>
+
 # Nabatt · نبط
 
 **Nabatt** — from *Nabataean*, the people who cut Petra out of the rock, with
@@ -10,6 +14,10 @@ your clock.
 
 Set `tariff_jd_per_kwh` in `config.json` to the rate on your own
 electricity bill, and every cost figure follows from there.
+
+<p align="center">
+  <img src="docs/screenshots/live.png" alt="The Live tab" width="100%">
+</p>
 
 ---
 
@@ -63,20 +71,31 @@ The tray bolt is colour-coded by load (green → amber → red); hover it for ex
 watts and today's cost, click it to open the window. If a logger ever stops,
 the tray restarts it within a minute.
 
+---
+
 ## The four tabs
 
-- **Live** — current draw split GPU / CPU / rest, a 3-hour curve, today's and
-  this month's cost, projected month-end bill, and what is drawing power right now.
-- **History** — every calendar day since logging began. Click any day for its
-  24-hour profile, its unlogged stretches, and the app breakdown for that day.
-  Click one of its hour bars to jump straight into that hour.
-- **Hours** — every hour on record, searchable. See below.
-- **Apps** — where the electricity went over today / 7 days / 30 days / all time.
+### Live
 
-## Asking questions of the history
+Current draw split GPU / CPU / rest, a 3-hour curve, today's and this month's
+cost, a projected month-end bill under three assumptions, and what is drawing
+power *right now*. That is the screenshot at the top of this page.
 
-The **Hours** tab is the one to reach for when you want to know *what happened
-then*. Every hour ever logged is listed, with filters that combine:
+### History
+
+Every calendar day since logging began, with the day you pick opened
+underneath: its energy, cost, hour-by-hour profile, and — stated plainly — the
+stretches nobody logged.
+
+<p align="center">
+  <img src="docs/screenshots/history.png" alt="The History tab" width="100%">
+</p>
+
+Click any hour bar to jump straight into that hour.
+
+### Hours
+
+Every hour ever recorded, searchable. The filters combine:
 
 | Filter | Use it for |
 |---|---|
@@ -88,19 +107,39 @@ then*. Every hour ever logged is listed, with filters that combine:
 | **Sort by** | newest, most energy, highest peak, highest average |
 
 Under the filters, a **day-by-hour grid** shades every hour by its energy, so
-heavy stretches are obvious at a glance. Click any square — or any row in the
-table — and the hour opens in full:
+heavy stretches are obvious at a glance.
 
-- energy, cost, average, peak and the minute it peaked
-- a **minute-by-minute** wall and GPU curve for those 60 minutes
-- any unlogged stretches inside the hour, to the second
-- **every app that ran in that hour**, with its energy, cost and share
+<p align="center">
+  <img src="docs/screenshots/hours.png" alt="The Hours tab, with its filters and day-by-hour grid" width="100%">
+</p>
+
+Click any square — or any row in the table — and the hour opens in full:
+energy, cost, average, peak and the minute it peaked; a **minute-by-minute**
+wall and GPU curve; any unlogged stretches inside the hour, to the second; and
+**every app that ran in that hour**, with its energy, cost and share.
+
+<p align="center">
+  <img src="docs/screenshots/hour-detail.png" alt="One hour opened in full" width="100%">
+</p>
 
 Picking an app in the filter also changes the *Mostly* column to show that
 app's share of each hour instead of the hour's top app — so "which hours was
 llama.cpp actually working, and what did each cost me" is one selection away.
 Apps that merely existed without drawing measurable power (under 0.5 Wh in the
 hour) are left out, so the list is not padded with noise.
+
+### Apps
+
+Where the electricity went over today / 7 days / 30 days / all time.
+
+<p align="center">
+  <img src="docs/screenshots/apps.png" alt="The Apps tab" width="100%">
+</p>
+
+*(the top rows only — the full list runs to every process that drew measurable
+power in the range)*
+
+---
 
 ## What runs in the background
 
@@ -206,3 +245,69 @@ it never closes with your normal browser and never touches that profile.
 Requires Python 3 on PATH; the tray also needs `pystray` and `pillow`, which
 `install.ps1` installs for you. Without them everything else still runs — only
 the tray is skipped.
+
+---
+
+## How this was built
+
+It started as one HTML file reading a CSV, and grew into the four pieces above.
+The parts worth writing down:
+
+**Per-application power looked impossible at first.** `nvidia-smi pmon` returns
+blank per-process rows under Windows' WDDM driver model, which is the obvious
+place to look and a dead end. Windows' own performance counters do have the
+answer: `\GPU Engine(pid_*)\Utilization Percentage` gives per-process GPU busy
+time. That query costs about 2.1 s, far too slow for the 10 s power loop — so
+per-app sampling was split into its own process on a 30 s cadence, and the two
+logs are joined by timestamp at read time.
+
+**Attribution only divides what is actually attributable.** Power below the GPU
+and CPU idle floors is not shared out; it is logged as `__baseline__`. An app's
+share is therefore what it *added*, and the shares do not sum to the wall
+figure — deliberately.
+
+**Missing time is shown, never filled in.** Coverage percentages, gap lists to
+the minute in day view and to the second inside an hour. A machine that was
+asleep reads as a gap, not as a low average.
+
+**The bugs worth remembering:**
+
+- **Every request took two seconds.** `localhost` resolves to `::1` first on
+  this machine, but the server bound `0.0.0.0` — IPv4 only. Measured:
+  `localhost` 2084 ms, `127.0.0.1` 10 ms, `[::1]` failed after 2042 ms. Fixed
+  by binding `::` with `IPV6_V6ONLY=0`, which drops `localhost` to 33 ms. Every
+  internal probe now uses `127.0.0.1` explicitly.
+- **`pythonw.exe` has no stdout**, so an unguarded `print()` at startup killed
+  the dashboard silently on every launch.
+- **"Already running" when nothing was.** The service check matched any shell
+  whose command line merely mentioned a script name — including the diagnostic
+  shell doing the checking. Now it filters on process name and anchors on the
+  `-File <path>` form, excluding its own ancestors.
+- **A 0.0 W average beside a 367.9 W peak** — a `sec > 60` threshold was
+  suppressing averages for short-lived processes.
+- **The uninstaller reported failure** to Windows because `Get-Process chrome,
+  msedge` raises when one of them is not running. Per-name `try`/`catch`, and
+  an explicit `exit 0`.
+- **Add/Remove Programs claimed 197 MB** — the size scan was counting the app
+  window's Chrome cache. Excluding it: 0.3 MB.
+- **Filtering hours by an app returned noise** — hours where the process merely
+  existed at 0.00000 kWh. A 0.5 Wh floor cut 10 results to the 5 real ones.
+
+### The images in this README
+
+The screenshots are the live app, captured from the running instance through
+the Chrome DevTools Protocol so that a specific day and hour could be opened
+before the shot, and the viewport sized to the whole page in one piece.
+
+The banner is generated locally — **Qwen-Image 2512** (Apache 2.0) on an RTX
+3090 via ComfyUI, 1536×640, 60 s. The wordmark is laid over it in HTML and
+rendered in Chrome rather than drawn with Pillow, because Pillow here is built
+without libraqm and would set **نبط** as disconnected letters in the wrong
+order.
+
+One thing to know if you regenerate it: this box's cuDNN raises
+`CUDNN_STATUS_SUBLIBRARY_VERSION_MISMATCH` for the kernels torch asks of it,
+which kills the sampler and then the VAE decode. ComfyUI must be started with
+cuDNN disabled — and `torch.backends.cudnn.enabled = False` is not enough on
+its own, because `comfy/ops.py` re-enables the cuDNN attention backend per call
+inside `sdpa_kernel(..., set_priority=True)`. That list has to be rewritten too.
