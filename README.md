@@ -24,8 +24,11 @@ bill — divide the total by the kWh on it — and every cost figure follows fro
 there. The screenshots below are a real machine on a real Jordanian tariff.
 
 <p align="center">
-  <img src="docs/screenshots/live.png" alt="The Live tab" width="100%">
+  <img src="docs/demo.gif" alt="Live view, a day's history, filtering every hour by application, one hour opened, and the dark theme" width="100%">
 </p>
+
+<p align="center"><i>Live draw → a day, hour by hour → every recorded hour filtered
+down to the ones a given app was working in → inside one of them → dark theme.</i></p>
 
 ---
 
@@ -87,7 +90,11 @@ the tray restarts it within a minute.
 
 Current draw split GPU / CPU / rest, a 3-hour curve, today's and this month's
 cost, a projected month-end bill under three assumptions, and what is drawing
-power *right now*. That is the screenshot at the top of this page.
+power *right now*.
+
+<p align="center">
+  <img src="docs/screenshots/live.png" alt="The Live tab" width="100%">
+</p>
 
 ### History
 
@@ -332,6 +339,17 @@ The screenshots are the live app, captured from the running instance through
 the Chrome DevTools Protocol so that a specific day and hour could be opened
 before the shot, and the viewport sized to the whole page in one piece. They
 are PNG, palette-quantised — flat UI colour survives that untouched.
+
+The demo is the same app, recorded over `Page.startScreencast` while a
+storyboard ran *inside* the page on timers — which is what keeps the socket
+free to drain frames while the UI is being driven. Two things that are easy to
+get wrong: Chrome only emits a frame when something actually changes, so the
+frames have to be resampled onto a steady clock or every still moment collapses
+to one frame and the pacing goes wrong; and for the same reason the recording
+ends the instant the last change lands, so the closing state has to be held
+deliberately. Encoded at 880 px with a 96-colour palette and no dithering —
+on flat UI that is indistinguishable from a dithered 128-colour encode and 39%
+smaller (3.9 MB → 2.4 MB).
 
 The three photographic plates are generated locally: **Qwen-Image 2512**
 (Apache 2.0, so it can ship in a repo) on an RTX 3090 via ComfyUI, ~55 s each.
