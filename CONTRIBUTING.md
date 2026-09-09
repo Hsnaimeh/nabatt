@@ -35,6 +35,21 @@ Nabatt's one real promise is that it does not invent data. Please keep it:
 If a change breaks one of these, it needs a very good reason in the pull
 request.
 
+## Working on the dashboard without Windows
+
+```bash
+python dashboard.py --demo
+```
+
+That generates a fortnight of synthetic samples into a temp folder and serves
+them through the normal code path, so the whole UI, every endpoint and all of
+the arithmetic can be worked on from Linux or macOS with no GPU. `demo_data.py`
+writes the CSVs; it is also the obvious fixture to build a test suite on, since
+it produces known input for maths that is otherwise awkward to exercise.
+
+If you change the log format, change `demo_data.py` in the same commit — it is
+the only executable description of that format outside the loggers themselves.
+
 ## Running it from source
 
 ```powershell

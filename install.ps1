@@ -64,7 +64,8 @@ if ($Src -ne $Target) {
   $files = @('paths.ps1', 'paths.py', 'power-logger.ps1', 'app-logger.ps1',
              'dashboard.py', 'tray.py', 'open-app.ps1', 'make-icon.py',
              'start-power-tracking.ps1', 'stop-power-tracking.ps1',
-             'install.ps1', 'uninstall.ps1', 'config.json', 'README.md')
+             'install.ps1', 'uninstall.ps1', 'config.json', 'README.md',
+             'demo_data.py', 'LICENSE', 'CONTRIBUTING.md')
   $n = 0
   foreach ($f in $files) {
     $from = Join-Path $Src $f

@@ -19,6 +19,17 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from paths import APP as ROOT, LOGS, WEB, cfg   # noqa: E402
 
+# --demo swaps the log folder and the config for a generated fortnight, so the
+# dashboard can be explored on any machine. Everything downstream of this is
+# the ordinary code path reading ordinary CSVs -- nothing is stubbed.
+DEMO = "--demo" in sys.argv
+if DEMO:
+    import demo_data                            # noqa: E402
+    LOGS, _DEMO_CFG, _n_power, _n_apps = demo_data.setup()
+
+    def cfg():                                  # noqa: F811
+        return dict(_DEMO_CFG)
+
 
 def parse_dt(s):
     s = s.strip()
@@ -290,7 +301,8 @@ def api_data():
     rows = read_month(now.strftime("%Y-%m"))
 
     out = {"now": now.strftime("%Y-%m-%d %H:%M:%S"), "rate": rate,
-           "currency": c.get("currency", "JOD"), "samples": len(rows), "live": False}
+           "currency": c.get("currency", "JOD"), "samples": len(rows),
+           "live": False, "demo": DEMO}
 
     days_in_month = calendar.monthrange(now.year, now.month)[1]
     month_end = datetime(now.year, now.month, days_in_month, 23, 59, 59)
@@ -739,10 +751,18 @@ def serve(port):
 
 if __name__ == "__main__":
     port = int(cfg().get("port", 8099))
+    for i, a in enumerate(sys.argv):            # --port 9000, for a demo that
+        if a == "--port" and i + 1 < len(sys.argv):   # must not collide with
+            port = int(sys.argv[i + 1])               # an installed copy
     srv = serve(port)
     # Under pythonw.exe there is no console: sys.stdout is None, and an
     # unguarded print() would take the whole service down at startup.
     if sys.stdout is not None:
+        if DEMO:
+            print("DEMO MODE - invented data, nothing here was measured")
+            print("  %s" % LOGS)
+            print("  %d power samples, %d per-app samples" %
+                  (_n_power, _n_apps))
         print("dashboard on http://localhost:%d  (and your LAN IP)" % port)
         sys.stdout.flush()
     srv.serve_forever()

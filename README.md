@@ -32,6 +32,32 @@ down to the ones a given app was working in → inside one of them → dark them
 
 ---
 
+## Try it without installing anything
+
+Nabatt normally wants Windows, an NVIDIA card, and a day or two of logging
+before there is anything to look at. To just *see* it:
+
+```bash
+git clone https://github.com/Hsnaimeh/nabatt.git
+cd nabatt
+python dashboard.py --demo
+```
+
+Then open <http://localhost:8099>. Works on Linux and macOS too — the
+dashboard is standard-library Python with no dependencies; only the loggers are
+Windows-specific.
+
+`--demo` generates a plausible fortnight into a temp folder, in exactly the CSV
+format the real loggers write, and then reads it through the ordinary code
+path — no endpoint is stubbed and no data is faked at the API. The machine it
+describes is invented, though: it is on in the morning, off at night, quiet at
+weekends, with a few heavy GPU sessions to make the Hours filter worth using.
+So that nobody mistakes it for measurement, the header shows a **DEMO DATA**
+badge and `/api/data` returns `"demo": true`.
+
+Add `--port 9000` if 8099 is busy. `python demo_data.py` writes the sample logs
+without starting the server.
+
 ## Install
 
 ```powershell
@@ -261,6 +287,7 @@ paths.ps1 / paths.py    works out where program and data live
 power-logger.ps1        whole-machine sampler
 app-logger.ps1          per-application sampler
 dashboard.py            HTTP service + all the maths
+demo_data.py            generates the sample logs behind --demo
 web/index.html          the UI (single file, no dependencies)
 web/Nabatt.ico          app icon, 16-256 px
 tray.py                 tray icon + logger watchdog
