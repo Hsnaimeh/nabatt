@@ -2,6 +2,13 @@
   <img src="docs/banner.jpg" alt="Nabatt" width="100%">
 </p>
 
+<p align="center">
+  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-e8963c">
+  <img alt="Platform: Windows" src="https://img.shields.io/badge/platform-Windows%2010%20%2F%2011-b73a2a">
+  <img alt="PowerShell and Python" src="https://img.shields.io/badge/built%20with-PowerShell%20%2B%20stdlib%20Python-8a6a4f">
+  <img alt="No admin rights" src="https://img.shields.io/badge/install-no%20admin%20rights-4a7c59">
+</p>
+
 # Nabatt · نبط
 
 **Nabatt** — from *Nabataean*, the people who cut Petra out of the rock, with
@@ -12,8 +19,9 @@ tariff, and which applications are responsible — logged continuously, kept
 forever, shown in a desktop app that starts with Windows and lives next to
 your clock.
 
-Set `tariff_jd_per_kwh` in `config.json` to the rate on your own
-electricity bill, and every cost figure follows from there.
+Set `tariff_jd_per_kwh` in `config.json` to the rate on your own electricity
+bill — divide the total by the kWh on it — and every cost figure follows from
+there. The screenshots below are a real machine on a real Jordanian tariff.
 
 <p align="center">
   <img src="docs/screenshots/live.png" alt="The Live tab" width="100%">
@@ -214,13 +222,17 @@ padded out to fill the wall.
   there.
 - The `est.` figure on the Live tab covers the stretch between `billing_start`
   and the first log line, at a flat `pre_log_estimate_w`. It is a guess, and it
-  is labelled as one.
+  is labelled as one. `billing_start` ships empty, which switches the estimate
+  off — set it only if you want the current bill to reach back before Nabatt
+  was installed.
 
 ## Tuning `config.json`
 
 | Key | Meaning |
 |---|---|
-| `tariff_jd_per_kwh` | your rate — the only number that changes the bill |
+| `tariff_jd_per_kwh` | your rate — the only number that changes the bill; ships as a placeholder `0.1` |
+| `currency` | the label shown next to every figure |
+| `billing_start` | empty by default; see above |
 | `cpu_idle_w`, `cpu_max_w`, `cpu_curve_exp` | the CPU power model |
 | `rest_of_system_w`, `monitors_w` | fixed loads; `monitors_w` is 0 (monitors on another socket) |
 | `psu_efficiency` | 0.90 |
@@ -341,9 +353,30 @@ Every wordmark is laid over its plate in HTML and rendered in Chrome rather
 than drawn with Pillow, because Pillow here is built without libraqm and would
 set **نبط** as three disconnected letters in the wrong order.
 
-One thing to know if you regenerate it: this box's cuDNN raises
+One thing worth recording, in case it saves someone an hour: on the machine
+these were generated on, cuDNN raises
 `CUDNN_STATUS_SUBLIBRARY_VERSION_MISMATCH` for the kernels torch asks of it,
-which kills the sampler and then the VAE decode. ComfyUI must be started with
+killing first the sampler and then the VAE decode. ComfyUI has to start with
 cuDNN disabled — and `torch.backends.cudnn.enabled = False` is not enough on
 its own, because `comfy/ops.py` re-enables the cuDNN attention backend per call
-inside `sdpa_kernel(..., set_priority=True)`. That list has to be rewritten too.
+inside `sdpa_kernel(..., set_priority=True)`. That priority list has to be
+rewritten too, and flash attention still ranks first, so nothing is lost.
+
+---
+
+## Contributing
+
+Bug reports are the most useful thing you can send, particularly from hardware
+that is not an RTX 3090 — the power model has only ever been calibrated against
+one machine. [CONTRIBUTING.md](CONTRIBUTING.md) has the details, including the
+one rule that matters: **Nabatt does not invent data.** Unobserved time is
+reported as a gap, and power that cannot be attributed to a process stays in the
+idle baseline rather than being spread over apps to make the totals look tidy.
+
+## Licence
+
+[MIT](LICENSE) © Hisham Snaimeh.
+
+The generated images in `docs/` were made with
+[Qwen-Image](https://huggingface.co/Qwen/Qwen-Image) (Apache 2.0) and are
+covered by the same licence as the rest of the repository.

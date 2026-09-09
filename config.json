@@ -1,5 +1,5 @@
 {
-  "_comment": "Defaults. Set tariff_jd_per_kwh to the rate on your own electricity bill - it is the only number that changes the cost figures.",
+  "_comment": "Defaults, used only to seed %LOCALAPPDATA%\\Nabatt\\config.json on a first install. Set tariff_jd_per_kwh to the rate on your own electricity bill - it is the only number that changes the cost figures. Leave billing_start empty unless you want the pre-logging estimate; see the README.",
   "tariff_jd_per_kwh": 0.1,
   "currency": "JOD",
   "billing_start": "",
