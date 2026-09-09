@@ -26,7 +26,7 @@ $ErrorActionPreference = 'Stop'
 
 $App       = 'Nabatt'
 $Tagline   = 'Power & cost monitor'
-$Publisher = 'Local install'
+$Publisher = 'Hisham Snaimeh'
 $Version   = '1.0.0'
 
 $Src     = Split-Path -Parent $PSCommandPath
