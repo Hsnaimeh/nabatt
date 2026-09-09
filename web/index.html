@@ -1,0 +1,1088 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Nabatt</title>
+<link rel="icon" type="image/png" href="/icon.png">
+<link rel="apple-touch-icon" href="/icon.png">
+<style>
+/* Light is the default palette; the dark one is layered on top of it below,
+   so every colour is defined exactly once per theme. */
+:root{
+  --bg:#f4f6f9; --bg2:#eef1f6; --card:#ffffff; --card2:#f1f4f9;
+  --line:#e2e7ef; --line2:#cfd8e5;
+  --tx:#131a26; --tx2:#4e5c72; --tx3:#7d8ba0;
+  --acc:#c2660a; --accbar:#f5a524; --acc2:#ef6b3d;
+  --gpu:#3b5bdb; --cpu:#0d9a6c; --base:#9aa8bb;
+  --ok:#0d9a6c; --warn:#c2660a; --bad:#d64545;
+  --grid:rgba(19,26,38,.10); --track:#e8ecf3; --glass:rgba(19,26,38,.045);
+  --bodybg:radial-gradient(1100px 620px at 12% -14%,#ffffff 0%,var(--bg) 62%);
+  --heat0:#e9edf3; --heatr:225; --heatg:236; --heatb:245;
+  --tipbg:#ffffff;
+  --r:14px; --sh:0 1px 2px rgba(19,26,38,.05), 0 6px 20px rgba(19,26,38,.07);
+  --big:linear-gradient(160deg,#1b2431,#d97a06);
+  --tabsh:0 0 0 1px var(--line) inset, 0 1px 2px rgba(19,26,38,.06);
+  --fs:-apple-system,"Segoe UI Variable Display","Segoe UI",Inter,system-ui,sans-serif;
+  --fm:"Cascadia Mono",ui-monospace,"SF Mono",Consolas,monospace;
+}
+:root[data-theme="dark"]{
+  --bg:#0a0e13; --bg2:#0e141b; --card:#131b24; --card2:#182230;
+  --line:#243040; --line2:#2f3d50;
+  --tx:#e8eef6; --tx2:#93a4b8; --tx3:#61738a;
+  --acc:#ffb02e; --accbar:#ffb02e; --acc2:#ff7847;
+  --gpu:#7c9cff; --cpu:#3ddc97; --base:#54637a;
+  --ok:#3ddc97; --warn:#ffb02e; --bad:#ff5f56;
+  --grid:rgba(36,48,64,.75); --track:#0c1219; --glass:rgba(255,255,255,.035);
+  --bodybg:radial-gradient(1200px 700px at 12% -12%,#16202c 0%,var(--bg) 58%);
+  --heat0:#101821; --heatr:41; --heatg:52; --heatb:68;
+  --tipbg:#0b1119;
+  --sh:0 1px 0 rgba(255,255,255,.03) inset, 0 8px 28px rgba(0,0,0,.45);
+  --big:linear-gradient(160deg,#fff,#ffb02e);
+  --tabsh:0 1px 0 rgba(255,255,255,.05) inset, 0 2px 6px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--bodybg) fixed;
+  color:var(--tx);font-family:var(--fs);font-size:14px;line-height:1.45;
+  -webkit-font-smoothing:antialiased;overflow-y:scroll;
+}
+body::-webkit-scrollbar,.scroll::-webkit-scrollbar{width:10px;height:10px}
+body::-webkit-scrollbar-thumb,.scroll::-webkit-scrollbar-thumb{background:var(--line2);border-radius:6px;border:3px solid transparent;background-clip:content-box}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 22px 56px}
+
+/* ---------- header ---------- */
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:11px;margin-right:auto}
+.mark{width:34px;height:34px;border-radius:10px;display:block;flex:none;
+  box-shadow:0 3px 10px rgba(183,58,42,.28)}
+h1{font-size:16px;font-weight:650;letter-spacing:-.2px}
+.ar{font-size:12px;font-weight:500;color:var(--tx3);letter-spacing:0;margin-left:3px}
+.sub{font-size:11.5px;color:var(--tx3);letter-spacing:.2px}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;
+  background:var(--card);border:1px solid var(--line);font-size:12px;color:var(--tx2);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--bad);flex:none}
+.pill.on .dot{background:var(--ok);box-shadow:0 0 0 0 rgba(61,220,151,.65);animation:pulse 2.2s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 8px rgba(61,220,151,0)}100%{box-shadow:0 0 0 0 rgba(61,220,151,0)}}
+
+/* ---------- tabs ---------- */
+nav{display:flex;gap:4px;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;padding:4px;margin-bottom:20px;width:fit-content;max-width:100%;overflow:auto}
+nav button{appearance:none;border:0;background:transparent;color:var(--tx2);font:inherit;
+  font-size:13px;font-weight:550;padding:8px 18px;border-radius:9px;cursor:pointer;
+  white-space:nowrap;transition:background .15s,color .15s}
+nav button:hover{color:var(--tx)}
+nav button[aria-selected="true"]{background:var(--card2);color:var(--tx);
+  box-shadow:var(--tabsh)}
+
+/* ---------- cards ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  box-shadow:var(--sh);padding:18px}
+.grid{display:grid;gap:14px}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+.hero{grid-template-columns:1.15fr 1fr;align-items:stretch}
+.lbl{font-size:11px;font-weight:600;letter-spacing:.9px;text-transform:uppercase;color:var(--tx3)}
+.val{font-size:26px;font-weight:640;letter-spacing:-.6px;font-variant-numeric:tabular-nums;margin-top:5px}
+.val small{font-size:13px;font-weight:520;color:var(--tx3);letter-spacing:0;margin-left:3px}
+.hint{font-size:11.5px;color:var(--tx3);margin-top:4px;font-variant-numeric:tabular-nums}
+
+.big{font-size:66px;font-weight:680;letter-spacing:-3px;line-height:1;
+  font-variant-numeric:tabular-nums;
+  background:var(--big);-webkit-background-clip:text;
+  background-clip:text;color:transparent}
+.big small{font-size:20px;letter-spacing:-.5px;-webkit-text-fill-color:var(--tx3);margin-left:6px}
+
+/* split bar */
+.split{display:flex;height:9px;border-radius:99px;overflow:hidden;background:var(--track);margin-top:16px}
+.split i{display:block;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:11px;font-size:12px;color:var(--tx2);
+  font-variant-numeric:tabular-nums}
+.legend b{color:var(--tx);font-weight:600}
+.sw{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+canvas{display:block;width:100%}
+
+/* ---------- tables ---------- */
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{font-size:10.5px;font-weight:650;letter-spacing:.8px;text-transform:uppercase;color:var(--tx3);
+  text-align:right;padding:0 10px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child{text-align:left}
+td{padding:9px 10px;border-bottom:1px solid var(--grid);font-size:13px;text-align:right;white-space:nowrap}
+td:first-child{text-align:left;white-space:normal}
+tbody tr:last-child td{border-bottom:0}
+tr.click{cursor:pointer;transition:background .12s}
+tr.click:hover{background:var(--glass)}
+tr.sel{background:rgba(245,165,36,.11)}
+tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--acc)}
+.muted td{color:var(--tx3)}
+.name{display:flex;align-items:center;gap:9px;min-width:0}
+.name span{overflow:hidden;text-overflow:ellipsis}
+.chip{font-size:10px;padding:2px 7px;border-radius:6px;background:var(--card2);
+  color:var(--tx3);border:1px solid var(--line);flex:none}
+
+/* bar inside a cell */
+.bar{position:relative;height:6px;border-radius:99px;background:var(--track);overflow:hidden;min-width:60px}
+.bar i{position:absolute;inset:0 auto 0 0;border-radius:99px;background:var(--accbar)}
+.cov{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.cov .bar{width:64px}
+
+/* ---------- heatmap ---------- */
+.heat{display:flex;gap:4px;flex-wrap:wrap}
+.hd{width:34px;height:34px;border-radius:8px;background:var(--heat0);border:1px solid var(--line);
+  display:grid;place-items:center;font-size:10px;color:var(--tx3);cursor:pointer;
+  transition:transform .12s,border-color .12s;font-variant-numeric:tabular-nums}
+.hd:hover{transform:translateY(-2px);border-color:var(--line2)}
+.hd.sel{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
+.hd.none{opacity:.34}
+
+.empty{padding:34px 20px;text-align:center;color:var(--tx3);font-size:13px}
+.err{background:rgba(214,69,69,.08);border:1px solid rgba(214,69,69,.28);color:var(--bad);
+  padding:11px 14px;border-radius:10px;font-size:13px;margin-bottom:14px}
+.note{font-size:11.5px;color:var(--tx3);margin-top:12px;line-height:1.6}
+h2{font-size:13.5px;font-weight:640;letter-spacing:-.1px;margin-bottom:2px}
+.hh{display:flex;align-items:baseline;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.hh .sub{margin-left:auto}
+.seg{display:flex;gap:3px;background:var(--track);border:1px solid var(--line);border-radius:9px;padding:3px}
+.seg button{appearance:none;border:0;background:transparent;color:var(--tx3);font:inherit;font-size:12px;
+  padding:5px 12px;border-radius:7px;cursor:pointer;transition:background .15s,color .15s}
+.seg button:hover{color:var(--tx)}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--tx);box-shadow:var(--tabsh)}
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:12px}
+.filters label{display:flex;flex-direction:column;gap:5px;font-size:11px;font-weight:600;
+  letter-spacing:.7px;text-transform:uppercase;color:var(--tx3)}
+.filters input,.filters select{appearance:none;font:inherit;font-size:13px;color:var(--tx);
+  background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;
+  min-width:0;width:100%;text-transform:none;letter-spacing:0;font-weight:450}
+.filters input:focus,.filters select:focus{outline:2px solid var(--accbar);outline-offset:-1px}
+.filters .row2{display:flex;align-items:center;gap:7px}
+.filters .row2 i{font-style:normal;font-size:11.5px;color:var(--tx3);flex:none}
+.lnk{appearance:none;border:0;background:transparent;color:var(--acc);font:inherit;
+  font-size:12px;cursor:pointer;padding:0;text-decoration:underline}
+.hrow{display:flex;align-items:center;gap:5px;margin-bottom:5px}
+.hrow .lab{width:96px;flex:none;font-size:11px;color:var(--tx3);font-variant-numeric:tabular-nums}
+.hcell{width:26px;height:22px;border-radius:5px;background:var(--heat0);flex:none;cursor:pointer;
+  border:1px solid transparent;transition:transform .1s}
+.hcell:hover{transform:scale(1.18);border-color:var(--tx3)}
+.hcell.sel{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
+.hcell.off{opacity:.3;cursor:default}
+.hcell.off:hover{transform:none;border-color:transparent}
+.haxis{display:flex;gap:5px;margin:6px 0 0 101px}
+.haxis span{width:26px;flex:none;font-size:9.5px;color:var(--tx3);text-align:center;
+  font-variant-numeric:tabular-nums}
+.gap{display:inline-block;font-size:11.5px;color:var(--tx3);background:var(--track);
+  border:1px solid var(--line);border-radius:7px;padding:3px 9px;margin:3px 4px 0 0;
+  font-variant-numeric:tabular-nums}
+#tip{position:fixed;z-index:50;pointer-events:none;opacity:0;transition:opacity .1s;
+  background:var(--tipbg);border:1px solid var(--line2);border-radius:9px;padding:8px 11px;
+  font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,.6);font-variant-numeric:tabular-nums;
+  white-space:nowrap}
+#tip b{color:var(--acc)}
+.skel{color:var(--tx3);font-size:13px;padding:20px;text-align:center}
+
+@media(max-width:900px){
+  .g4{grid-template-columns:repeat(2,1fr)}
+  .g3,.g2,.hero{grid-template-columns:1fr}
+  .big{font-size:54px}
+  .wrap{padding:16px 14px 44px}
+  .hide-s{display:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="brand">
+    <img class="mark" src="/icon.png" alt="" width="34" height="34">
+    <div>
+      <h1>Nabatt <span class="ar">نبط</span></h1>
+      <div class="sub" id="sub">starting&hellip;</div>
+    </div>
+  </div>
+  <div class="pill" id="ratePill">&mdash;</div>
+  <div class="pill" id="livePill"><i class="dot"></i><span>connecting</span></div>
+  <div class="seg" id="themeSeg" title="Appearance">
+    <button data-t="light"  aria-pressed="false">Light</button>
+    <button data-t="dark"   aria-pressed="false">Dark</button>
+    <button data-t="auto"   aria-pressed="false">Auto</button>
+  </div>
+</header>
+
+<nav role="tablist">
+  <button role="tab" data-tab="live" aria-selected="true">Live</button>
+  <button role="tab" data-tab="history" aria-selected="false">History</button>
+  <button role="tab" data-tab="hours" aria-selected="false">Hours</button>
+  <button role="tab" data-tab="apps" aria-selected="false">Apps</button>
+</nav>
+
+<div id="err"></div>
+
+<!-- ================= LIVE ================= -->
+<section id="tab-live">
+  <div class="grid hero" style="margin-bottom:14px">
+    <div class="card">
+      <div class="lbl">Drawing right now</div>
+      <div class="big" id="watts">&mdash;<small>W</small></div>
+      <div class="split">
+        <i id="sGpu" style="background:var(--gpu);width:0"></i>
+        <i id="sCpu" style="background:var(--cpu);width:0"></i>
+        <i id="sRest" style="background:var(--base);width:0"></i>
+      </div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--gpu)"></i>GPU <b id="lGpu">&mdash;</b> <span id="lGpuU" style="color:var(--tx3)"></span></span>
+        <span><i class="sw" style="background:var(--cpu)"></i>CPU <b id="lCpu">&mdash;</b> <span id="lCpuU" style="color:var(--tx3)"></span></span>
+        <span><i class="sw" style="background:var(--base)"></i>Rest <b id="lRest">&mdash;</b></span>
+      </div>
+      <div class="note" id="costRate">&nbsp;</div>
+    </div>
+    <div class="card">
+      <div class="hh"><h2>Last 3 hours</h2><div class="sub" id="chartHint"></div></div>
+      <canvas id="liveChart" height="182"></canvas>
+    </div>
+  </div>
+
+  <div class="grid g4" style="margin-bottom:14px">
+    <div class="card"><div class="lbl">Today</div><div class="val" id="tCost">&mdash;</div><div class="hint" id="tKwh">&mdash;</div></div>
+    <div class="card"><div class="lbl">This month (logged)</div><div class="val" id="mCost">&mdash;</div><div class="hint" id="mKwh">&mdash;</div></div>
+    <div class="card"><div class="lbl">Month bill so far</div><div class="val" id="totCost">&mdash;</div><div class="hint" id="totKwh">&mdash;</div></div>
+    <div class="card"><div class="lbl">Average draw</div><div class="val" id="avgW">&mdash;</div><div class="hint" id="loggedH">&mdash;</div></div>
+  </div>
+
+  <div class="grid g2">
+    <div class="card">
+      <div class="hh"><h2>Projected month-end bill</h2></div>
+      <table><tbody id="projBody"></tbody></table>
+      <div class="note" id="projNote"></div>
+    </div>
+    <div class="card">
+      <div class="hh"><h2>Using power right now</h2><div class="sub" id="appsAt"></div></div>
+      <div id="liveApps"><div class="skel">waiting for the first app sample&hellip;</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= HISTORY ================= -->
+<section id="tab-history" hidden>
+  <div class="grid g4" style="margin-bottom:14px">
+    <div class="card"><div class="lbl">All time</div><div class="val" id="hCost">&mdash;</div><div class="hint" id="hKwh">&mdash;</div></div>
+    <div class="card"><div class="lbl">Average day</div><div class="val" id="hAvg">&mdash;</div><div class="hint" id="hAvgK">&mdash;</div></div>
+    <div class="card"><div class="lbl">Days on record</div><div class="val" id="hDays">&mdash;</div><div class="hint" id="hRange">&mdash;</div></div>
+    <div class="card"><div class="lbl">Highest draw seen</div><div class="val" id="hPeak">&mdash;</div><div class="hint" id="hBusy">&mdash;</div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="hh"><h2>Every day on record</h2><div class="sub">click a day for the full breakdown</div></div>
+    <div class="heat" id="heat"></div>
+    <div class="note">Colour is that day&rsquo;s energy. <b>Coverage</b> is the share of the day the logger was actually running &mdash; anything below 100% means the PC was off, asleep, or the logger was stopped, and those hours are listed as gaps rather than guessed at.</div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div style="overflow:auto" class="scroll">
+      <table>
+        <thead><tr>
+          <th>Day</th><th>Energy</th><th>Cost</th><th>Avg</th><th>Peak</th>
+          <th class="hide-s">Peak at</th><th>PC on</th><th>Coverage</th><th class="hide-s">Gaps</th>
+        </tr></thead>
+        <tbody id="dayRows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="dayDetail"></div>
+</section>
+
+<!-- ================= HOURS ================= -->
+<section id="tab-hours" hidden>
+  <div class="card" style="margin-bottom:14px">
+    <div class="hh"><h2>Filter the hours</h2>
+      <button class="lnk" id="hrReset" style="margin-left:auto">reset</button></div>
+    <div class="filters">
+      <label>From<input type="date" id="fFrom"></label>
+      <label>To<input type="date" id="fTo"></label>
+      <label>Between<span class="row2">
+        <select id="fHFrom"></select><i>and</i><select id="fHTo"></select></span></label>
+      <label>Days<select id="fDayType">
+        <option value="all">every day</option>
+        <option value="week">weekdays only</option>
+        <option value="weekend">weekends only</option></select></label>
+      <label>App was running<select id="fApp"><option value="">any app</option></select></label>
+      <label><span id="fMinLbl">Hour used at least</span><span class="row2">
+        <input type="number" id="fMinKwh" min="0" step="0.05" placeholder="0"><i>kWh</i></span></label>
+      <label>Sort by<select id="fSort">
+        <option value="time">newest first</option>
+        <option value="kwh">most energy</option>
+        <option value="peak">highest peak</option>
+        <option value="avg">highest average</option></select></label>
+    </div>
+  </div>
+
+  <div class="grid g4" style="margin-bottom:14px" id="hrTotals"></div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="hh"><h2>Day by hour</h2><div class="sub">click any square to see that hour</div></div>
+    <div id="hrGrid" class="scroll" style="overflow:auto"></div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="hh"><h2>Matching hours</h2><div class="sub" id="hrCount"></div></div>
+    <div style="overflow:auto" class="scroll">
+      <table><thead><tr>
+        <th>Hour</th><th>Energy</th><th>Cost</th><th>Avg</th><th>Peak</th>
+        <th class="hide-s">Lowest</th><th>Coverage</th><th>Mostly</th>
+      </tr></thead><tbody id="hrRows"></tbody></table>
+    </div>
+  </div>
+
+  <div id="hourDetail"></div>
+</section>
+
+<!-- ================= APPS ================= -->
+<section id="tab-apps" hidden>
+  <div class="card" style="margin-bottom:14px">
+    <div class="hh">
+      <h2>Where the electricity went</h2>
+      <div class="seg" id="appRange" style="margin-left:auto">
+        <button data-r="today" aria-pressed="true">Today</button>
+        <button data-r="7d" aria-pressed="false">7 days</button>
+        <button data-r="30d" aria-pressed="false">30 days</button>
+        <button data-r="all" aria-pressed="false">All</button>
+      </div>
+    </div>
+    <div id="appsTotals" class="grid g3" style="margin-bottom:16px"></div>
+    <div id="appsBody"><div class="skel">loading&hellip;</div></div>
+    <div class="note">
+      Per-app figures come from Windows&rsquo; own <b>GPU Engine</b> counters (per-process GPU busy time) and
+      per-process CPU time. The GPU watts above the card&rsquo;s idle floor and the CPU watts above idle are
+      split between processes in proportion to those two numbers.
+      <b>Idle baseline</b> is what the machine burns just being switched on &mdash; PSU loss, board, fans, RAM,
+      GPU idle floor &mdash; and is never charged to an app, so app shares are honest rather than inflated to fill the wall.
+    </div>
+  </div>
+</section>
+
+</div>
+<div id="tip"></div>
+
+<script>
+"use strict";
+const $  = id => document.getElementById(id);
+const CUR = {v:"JOD"};
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const money = (n,d=3) => (n==null?"—":Number(n).toFixed(d)+" "+CUR.v);
+const num   = (n,d=1) => n==null?"—":Number(n).toFixed(d);
+const hrs   = h => h==null?"—":(h>=1?num(h,1)+" h":Math.round(h*60)+" min");
+const pct   = n => Math.round((n||0)*100)+"%";
+
+/* ---------- theme ----------
+   "auto" follows Windows; light and dark are explicit. Stored per browser
+   profile, and the app window has its own profile, so the window and any
+   normal browser tab can differ without fighting each other. */
+let booted=false, lastDay=null, lastHour=null;
+const mql = matchMedia("(prefers-color-scheme: dark)");
+function applyTheme(mode){
+  const dark = mode==="dark" || (mode==="auto" && mql.matches);
+  document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+  document.querySelectorAll("#themeSeg button").forEach(b=>
+    b.setAttribute("aria-pressed", b.dataset.t===mode));
+  redrawCharts();
+}
+function themeMode(){
+  try{ return localStorage.getItem("pt-theme") || "light"; }catch(e){ return "light"; }
+}
+function setTheme(mode){
+  try{ localStorage.setItem("pt-theme", mode); }catch(e){}
+  applyTheme(mode);
+}
+$("themeSeg").onclick = e => {
+  const b = e.target.closest("button");
+  if(b) setTheme(b.dataset.t);
+};
+mql.addEventListener("change", ()=>{ if(themeMode()==="auto") applyTheme("auto"); });
+applyTheme(themeMode());
+
+/* Chart colours live in CSS so both themes stay in one place. */
+function hexA(c,a){
+  c=(c||"").trim();
+  if(c.startsWith("#")){
+    if(c.length===4) c="#"+c[1]+c[1]+c[2]+c[2]+c[3]+c[3];
+    const n=parseInt(c.slice(1,7),16);
+    return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+a+")";
+  }
+  const m=c.match(/rgba?\(([^)]+)\)/);
+  if(m){ const p=m[1].split(",").map(x=>x.trim()); return "rgba("+p[0]+","+p[1]+","+p[2]+","+a+")"; }
+  return c;
+}
+function cv_(name){
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+function chartColors(){
+  return {grid:cv_("--grid"), tx:cv_("--tx3"), acc:cv_("--accbar"),
+          gpu:cv_("--gpu"), acc2:cv_("--acc2"), track:cv_("--track")};
+}
+function redrawCharts(){
+  if(!booted) return;
+  drawLive();
+  const hc=$("hourChart");
+  if(hc && lastDay) hourChart(hc, lastDay.hourly, lastDay);
+  const h2=$("hourChart2");
+  if(h2 && lastHour) lineChart(h2, lastHour.series||[], {height:160,gpu:true});
+}
+
+/* ---------- tooltip ---------- */
+const tip = $("tip");
+function showTip(e,html){tip.innerHTML=html;tip.style.opacity=1;moveTip(e);}
+function moveTip(e){
+  const r=tip.getBoundingClientRect();
+  let x=e.clientX+14, y=e.clientY-r.height-12;
+  if(x+r.width>innerWidth-8) x=e.clientX-r.width-14;
+  if(y<8) y=e.clientY+18;
+  tip.style.left=x+"px"; tip.style.top=y+"px";
+}
+function hideTip(){tip.style.opacity=0;}
+
+/* ---------- tabs (deep-linkable via #live / #history / #apps) ---------- */
+let tab="live";
+function setTab(name,push){
+  if(!["live","history","hours","apps"].includes(name)) name="live";
+  tab=name;
+  document.querySelectorAll("nav button").forEach(x=>
+    x.setAttribute("aria-selected", x.dataset.tab===name));
+  ["live","history","hours","apps"].forEach(t=>$("tab-"+t).hidden = t!==name);
+  if(push && location.hash.slice(1)!==name) location.hash=name;
+  if(name==="history") loadHistory();
+  if(name==="hours") loadHours();
+  if(name==="apps") loadApps();
+  if(name==="live") drawLive();
+}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>setTab(b.dataset.tab,true));
+addEventListener("hashchange",()=>setTab(location.hash.slice(1)||"live",false));
+
+/* ---------- error banner ---------- */
+let errShown=false;
+function setErr(msg){
+  if(!msg){ if(errShown){$("err").innerHTML="";errShown=false;} return; }
+  $("err").innerHTML='<div class="err">'+esc(msg)+"</div>"; errShown=true;
+}
+async function api(path){
+  const r = await fetch(path,{cache:"no-store"});
+  if(!r.ok) throw new Error(path+" → HTTP "+r.status);
+  return r.json();
+}
+
+/* ================= line chart ================= */
+function lineChart(cv, series, opts){
+  opts = opts||{};
+  const dpr = Math.min(devicePixelRatio||1, 2);
+  const W = cv.clientWidth, H = opts.height || cv.height;
+  cv.width = W*dpr; cv.height = H*dpr;
+  cv.style.height = H+"px";
+  const g = cv.getContext("2d");
+  g.setTransform(dpr,0,0,dpr,0,0);
+  g.clearRect(0,0,W,H);
+
+  const C = chartColors();
+  const pad = {l:44,r:10,t:12,b:22};
+  const iw = W-pad.l-pad.r, ih = H-pad.t-pad.b;
+  if(!series.length){
+    g.fillStyle=C.tx; g.font="12px var(--fs)"; g.textAlign="center";
+    g.fillText("no samples yet", W/2, H/2); return;
+  }
+  const max = Math.max(100, ...series.map(p=>p.w)) * 1.12;
+  const X = i => pad.l + (series.length<2?iw/2:i/(series.length-1)*iw);
+  const Y = v => pad.t + ih - (v/max)*ih;
+
+  // grid
+  g.strokeStyle=C.grid; g.lineWidth=1;
+  g.fillStyle=C.tx; g.font="10px ui-monospace,monospace"; g.textAlign="right";
+  const steps=4;
+  for(let i=0;i<=steps;i++){
+    const v=max/steps*i, y=Math.round(Y(v))+.5;
+    g.beginPath(); g.moveTo(pad.l,y); g.lineTo(W-pad.r,y); g.stroke();
+    g.fillText(Math.round(v)+"W", pad.l-8, y+3);
+  }
+  // x labels
+  g.textAlign="center";
+  const every = Math.max(1, Math.ceil(series.length/6));
+  series.forEach((p,i)=>{ if(i%every===0||i===series.length-1) g.fillText(p.t, X(i), H-6); });
+
+  const area=(key,stroke,fill)=>{
+    g.beginPath();
+    series.forEach((p,i)=>{ const x=X(i),y=Y(p[key]||0); i?g.lineTo(x,y):g.moveTo(x,y); });
+    if(fill){
+      const gr=g.createLinearGradient(0,pad.t,0,pad.t+ih);
+      gr.addColorStop(0,fill[0]); gr.addColorStop(1,fill[1]);
+      g.save(); g.lineTo(X(series.length-1),pad.t+ih); g.lineTo(X(0),pad.t+ih); g.closePath();
+      g.fillStyle=gr; g.fill(); g.restore();
+      g.beginPath(); series.forEach((p,i)=>{const x=X(i),y=Y(p[key]||0); i?g.lineTo(x,y):g.moveTo(x,y);});
+    }
+    g.strokeStyle=stroke; g.lineWidth=1.9; g.lineJoin="round"; g.stroke();
+  };
+  if(opts.gpu) area("g",C.gpu,null);
+  area("w",C.acc,[hexA(C.acc,.22),hexA(C.acc,0)]);
+
+  // hover
+  cv.onmousemove = e => {
+    const r=cv.getBoundingClientRect();
+    const i=Math.max(0,Math.min(series.length-1,
+      Math.round((e.clientX-r.left-pad.l)/(iw||1)*(series.length-1))));
+    const p=series[i];
+    showTip(e,"<b>"+num(p.w,0)+" W</b> at "+esc(p.t)+
+      (p.g!=null?"<br>GPU "+num(p.g,0)+" W":"")+(p.c!=null?" · CPU "+num(p.c,0)+" W":""));
+    lineChart(cv,series,opts);
+    const g2=cv.getContext("2d");
+    g2.setTransform(dpr,0,0,dpr,0,0);
+    g2.strokeStyle=C.tx; g2.lineWidth=1;
+    g2.beginPath(); g2.moveTo(X(i),pad.t); g2.lineTo(X(i),pad.t+ih); g2.stroke();
+    g2.fillStyle=C.acc; g2.beginPath(); g2.arc(X(i),Y(p.w),3.6,0,7); g2.fill();
+  };
+  cv.onmouseleave = ()=>{ hideTip(); lineChart(cv,series,opts); };
+}
+
+/* ================= LIVE ================= */
+let liveData=null;
+function drawLive(){ if(liveData) lineChart($("liveChart"), liveData.series||[], {height:182,gpu:true}); }
+
+function renderLive(d){
+  liveData=d; CUR.v=d.currency||"JOD";
+  setErr(null);
+  $("sub").textContent = d.now;
+  $("ratePill").textContent = num(d.rate,3)+" "+CUR.v+" / kWh";
+  const p=$("livePill");
+  p.classList.toggle("on", !!d.live);
+  p.querySelector("span").textContent = d.live ? "live · "+d.last_seen
+    : (d.age_s!=null ? "stale · "+d.last_seen : "no data");
+
+  $("watts").innerHTML = num(d.watts,0)+'<small>W</small>';
+  const rest = Math.max(0, d.watts - d.gpu_w - d.cpu_w);
+  const tot = Math.max(1, d.gpu_w+d.cpu_w+rest);
+  $("sGpu").style.width  = (d.gpu_w/tot*100)+"%";
+  $("sCpu").style.width  = (d.cpu_w/tot*100)+"%";
+  $("sRest").style.width = (rest/tot*100)+"%";
+  $("lGpu").textContent  = num(d.gpu_w,0)+" W";
+  $("lCpu").textContent  = num(d.cpu_w,0)+" W";
+  $("lRest").textContent = num(rest,0)+" W";
+  $("lGpuU").textContent = "· "+d.gpu_util+"% busy";
+  $("lCpuU").textContent = "· "+d.cpu_util+"% busy";
+  $("costRate").innerHTML = "At this draw: <b style='color:var(--tx)'>"+
+    money(d.watts/1000*d.rate,4)+"</b> per hour &middot; "+
+    money(d.watts/1000*24*d.rate,3)+" per day &middot; "+
+    money(d.watts/1000*24*30*d.rate,3)+" per 30 days";
+
+  $("tCost").textContent = money(d.today_cost,3);
+  $("tKwh").textContent  = num(d.today_kwh,3)+" kWh today";
+  $("mCost").textContent = money(d.month_cost,3);
+  $("mKwh").textContent  = num(d.month_kwh,3)+" kWh logged";
+  $("totCost").textContent = money(d.total_cost,3);
+  $("totKwh").textContent  = num(d.total_kwh,2)+" kWh incl. "+num(d.est_kwh,1)+" est. before logging";
+  $("avgW").innerHTML = num(d.avg_w,0)+'<small>W</small>';
+  $("loggedH").textContent = "over "+num(d.logged_h,1)+" h of logging";
+
+  const pr=d.projection||{}, rows=[];
+  const row=(k,label,note)=>{ const x=pr[k]; if(!x) return;
+    rows.push("<tr><td><div class='name'><span>"+label+"</span></div>"+
+      "<div class='hint'>"+note+"</div></td>"+
+      "<td>"+x.w+" W</td><td>"+num(x.kwh,1)+" kWh</td>"+
+      "<td style='color:var(--acc);font-weight:600'>"+money(x.cost,3)+"</td></tr>"); };
+  row("at_avg","If the rest of the month looks like the average so far","using "+num(d.avg_w,0)+" W");
+  row("at_current","If it stays exactly as it is right now","using "+num(d.watts,0)+" W");
+  row("at_full","If the machine ran flat out","GPU + CPU at maximum");
+  $("projBody").innerHTML = rows.join("") || "<tr><td class='empty'>not enough data yet</td></tr>";
+  $("projNote").textContent = num(d.remaining_h,0)+" h left in this "+d.days_in_month+"-day month.";
+
+  // live apps
+  const la=(d.live_apps||[]).filter(a=>a.w>=0.1);
+  $("appsAt").textContent = d.apps_at ? ("sampled "+d.apps_at) : "";
+  if(!la.length){
+    $("liveApps").innerHTML='<div class="skel">no app sample yet — the app logger writes every 30 s</div>';
+  } else {
+    const mx=Math.max(...la.map(a=>a.w));
+    $("liveApps").innerHTML='<table><tbody>'+la.slice(0,11).map(a=>
+      "<tr"+(a.baseline?" class='muted'":"")+"><td style='width:52%'><div class='name'><span>"+esc(a.app)+"</span>"+
+        (a.pids>1?"<i class='chip'>"+a.pids+" proc</i>":"")+"</div>"+
+        "<div class='bar' style='margin-top:6px'><i style='width:"+(a.w/mx*100)+"%;background:"+
+          (a.baseline?"var(--base)":"var(--acc)")+"'></i></div></td>"+
+      "<td>"+num(a.w,1)+" W</td>"+
+      "<td class='hide-s' style='color:var(--tx3)'>"+
+        (a.gpu_w>0.05?"GPU "+num(a.gpu_w,1)+"W":"")+"</td></tr>").join("")+"</tbody></table>";
+  }
+  drawLive();
+}
+
+/* ================= HISTORY ================= */
+let hist=null, selDay=null;
+async function loadHistory(force){
+  if(hist && !force) return renderHistory(hist);
+  $("dayRows").innerHTML='<tr><td colspan="9" class="skel">loading…</td></tr>';
+  try{ hist=await api("/api/history"); renderHistory(hist); }
+  catch(e){ setErr(e.message); }
+}
+function heatColor(k,max){
+  if(!k) return cv_("--heat0");
+  const t=Math.min(1,Math.pow(k/(max||1),.65));
+  const a=[+cv_("--heatr"),+cv_("--heatg"),+cv_("--heatb")], b=[245,165,36];
+  return "rgb("+a.map((v,i)=>Math.round(v+(b[i]-v)*t)).join(",")+")";
+}
+function renderHistory(h){
+  CUR.v=h.currency||"JOD";
+  const t=h.totals||{}, days=h.days||[];
+  $("hCost").textContent=money(t.cost,3);  $("hKwh").textContent=num(t.kwh,2)+" kWh total";
+  // averages only mean something once at least one whole day is in the books
+  const hasFull = (t.avg_day_kwh || 0) > 0;
+  $("hAvg").textContent  = hasFull ? money(t.avg_day_cost,3) : "—";
+  $("hAvgK").textContent = hasFull ? num(t.avg_day_kwh,2)+" kWh per full day"
+                                   : "no complete day yet";
+  $("hDays").textContent=(t.logged_days||0);
+  $("hRange").textContent = h.first_day ? ("since "+h.first_day) : "no data";
+  $("hPeak").innerHTML=num(t.peak_w,0)+'<small>W</small>';
+  $("hBusy").textContent = t.busiest ? ("busiest day "+t.busiest) : "no full day yet";
+
+  if(!days.length){ $("heat").innerHTML=""; $("dayRows").innerHTML='<tr><td class="empty">Nothing logged yet.</td></tr>'; return; }
+  const max=Math.max(...days.map(d=>d.kwh));
+
+  $("heat").innerHTML=days.map(d=>
+    "<div class='hd"+(d.samples?"":" none")+(d.date===selDay?" sel":"")+"' data-d='"+d.date+"' "+
+    "style='background:"+heatColor(d.kwh,max)+";color:"+(d.kwh>max*.45?"#2b1600":"var(--tx3)")+"'>"+
+    Number(d.date.slice(8))+"</div>").join("");
+  $("heat").querySelectorAll(".hd").forEach(el=>{
+    const d=days.find(x=>x.date===el.dataset.d);
+    el.onmouseenter=e=>showTip(e,"<b>"+d.date+" "+d.weekday+"</b><br>"+num(d.kwh,3)+" kWh · "+money(d.cost,3)+
+      "<br>coverage "+pct(d.coverage)+(d.partial?" · today, still running":""));
+    el.onmousemove=moveTip; el.onmouseleave=hideTip;
+    el.onclick=()=>openDay(d.date);
+  });
+
+  $("dayRows").innerHTML=days.map(d=>
+    "<tr class='click"+(d.date===selDay?" sel":"")+(d.samples?"":" muted")+"' data-d='"+d.date+"'>"+
+    "<td><div class='name'><span>"+d.date+"</span><i class='chip'>"+d.weekday+"</i>"+
+      (d.partial?"<i class='chip' style='color:var(--acc);border-color:rgba(255,176,46,.4)'>today</i>":"")+"</div></td>"+
+    "<td>"+(d.samples?num(d.kwh,3)+" kWh":"—")+"</td>"+
+    "<td style='color:var(--acc);font-weight:600'>"+(d.samples?money(d.cost,3):"—")+"</td>"+
+    "<td>"+(d.avg_w?num(d.avg_w,0)+" W":"—")+"</td>"+
+    "<td>"+(d.peak_w?num(d.peak_w,0)+" W":"—")+"</td>"+
+    "<td class='hide-s' style='color:var(--tx3)'>"+(d.peak_at||"—")+"</td>"+
+    "<td>"+(d.samples?hrs(d.on_hours):"—")+"</td>"+
+    "<td><div class='cov'><span style='color:var(--tx3)'>"+pct(d.coverage)+"</span>"+
+      "<div class='bar'><i style='width:"+(d.coverage*100)+"%;background:"+
+      (d.coverage>.95?"var(--ok)":d.coverage>.4?"var(--warn)":"var(--bad)")+"'></i></div></div></td>"+
+    "<td class='hide-s' style='color:var(--tx3)'>"+(d.gaps.length?d.gaps.length+" · "+hrs(d.off_hours):"none")+"</td></tr>").join("");
+  $("dayRows").querySelectorAll("tr.click").forEach(tr=>tr.onclick=()=>openDay(tr.dataset.d));
+
+  // Only (re)load the detail panel when the selected day actually changes, so a
+  // background refresh never yanks the open day back to a loading placeholder.
+  const want = selDay || days[days.length-1].date;
+  if(dayShown !== want) openDay(want,true);
+}
+
+let dayShown=null, daySeq=0;
+async function openDay(date,quiet){
+  selDay=date;
+  document.querySelectorAll("#dayRows tr,.hd").forEach(el=>
+    el.classList.toggle("sel", el.dataset.d===date));
+  const switching = dayShown!==date;
+  const seq = ++daySeq;                   // latest request wins; earlier ones bail
+  if(switching)
+    $("dayDetail").innerHTML='<div class="card"><div class="skel">loading '+esc(date)+'…</div></div>';
+  let d;
+  try{ d=await api("/api/day?d="+encodeURIComponent(date)); }
+  catch(e){
+    if(seq===daySeq && switching)
+      $("dayDetail").innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>';
+    return;
+  }
+  if(seq!==daySeq) return;
+  dayShown=date;
+  CUR.v=d.currency||CUR.v;
+
+  const apps=(d.apps||[]).filter(a=>a.kwh>0);
+  const maxA=Math.max(0.0001,...apps.map(a=>a.kwh));
+  const appTable = apps.length
+    ? "<table><thead><tr><th>Application</th><th>Energy</th><th>Cost</th><th>Share</th>"+
+      "<th class='hide-s'>Avg</th><th class='hide-s'>Peak</th><th class='hide-s'>Active</th></tr></thead><tbody>"+
+      apps.map(a=>"<tr"+(a.baseline?" class='muted'":"")+"><td style='width:38%'>"+
+        "<div class='name'><span>"+esc(a.app)+"</span>"+
+        (a.gpu_share>0.5&&!a.baseline?"<i class='chip' style='color:var(--gpu);border-color:rgba(124,156,255,.35)'>GPU</i>":"")+"</div>"+
+        "<div class='bar' style='margin-top:6px'><i style='width:"+(a.kwh/maxA*100)+"%;background:"+
+          (a.baseline?"var(--base)":"var(--acc)")+"'></i></div></td>"+
+        "<td>"+num(a.kwh,4)+" kWh</td>"+
+        "<td style='color:var(--acc)'>"+money(a.cost,4)+"</td>"+
+        "<td>"+(a.share*100).toFixed(1)+"%</td>"+
+        "<td class='hide-s'>"+num(a.avg_w,1)+" W</td>"+
+        "<td class='hide-s'>"+num(a.peak_w,1)+" W</td>"+
+        "<td class='hide-s' style='color:var(--tx3)'>"+hrs(a.active_h)+"</td></tr>").join("")+"</tbody></table>"
+    : '<div class="empty">No per-app samples for this day.<br><span style="font-size:12px">app-logger.ps1 records these; days before it was installed have none.</span></div>';
+
+  const gaps = d.gaps.length
+    ? d.gaps.map(g=>"<span class='gap'>"+g.from+" → "+g.to+" &middot; "+hrs(g.hours)+"</span>").join("")
+    : "<span class='gap' style='color:var(--ok);border-color:rgba(61,220,151,.3)'>none — logged continuously</span>";
+
+  $("dayDetail").innerHTML =
+    '<div class="card" style="margin-bottom:14px">'+
+      '<div class="hh"><h2>'+esc(d.date)+' · '+esc(d.weekday)+'</h2>'+
+      '<div class="sub">'+(d.partial?"today, still recording":"complete day")+'</div></div>'+
+      '<div class="grid g4" style="margin-bottom:18px">'+
+        stat("Energy", num(d.kwh,3)+" kWh", d.samples+" samples")+
+        stat("Cost", money(d.cost,3), "at "+num(d.rate,3)+" "+CUR.v+"/kWh")+
+        stat("Average draw", num(d.avg_w,0)+" W", "peak "+num(d.peak_w,0)+" W at "+(d.peak_at||"—"))+
+        stat("PC was on", hrs(d.on_hours), "coverage "+pct(d.coverage)+" · first "+(d.first_seen||"—")+", last "+(d.last_seen||"—"))+
+      '</div>'+
+      '<div class="lbl" style="margin-bottom:9px">Hour by hour '+
+      '<span style="text-transform:none;letter-spacing:0;font-weight:450">'+
+      '&middot; click an hour to see what ran in it</span></div>'+
+      '<canvas id="hourChart" height="150"></canvas>'+
+      '<div class="lbl" style="margin:18px 0 4px">Unlogged stretches ('+hrs(d.off_hours)+')</div>'+
+      '<div>'+gaps+'</div>'+
+    '</div>'+
+    '<div class="card"><div class="hh"><h2>What used it on this day</h2></div>'+appTable+'</div>';
+
+  lastDay=d;
+  hourChart($("hourChart"), d.hourly, d);
+  if(!quiet) $("dayDetail").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function stat(l,v,h){
+  return '<div style="background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:13px">'+
+    '<div class="lbl">'+l+'</div><div class="val" style="font-size:21px">'+v+'</div>'+
+    '<div class="hint">'+h+'</div></div>';
+}
+
+function hourChart(cv,hourly,day){
+  const dpr=Math.min(devicePixelRatio||1,2), W=cv.clientWidth, H=150;
+  cv.width=W*dpr; cv.height=H*dpr; cv.style.height=H+"px";
+  const g=cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+  const C=chartColors();
+  const pad={l:44,r:8,t:8,b:20}, iw=W-pad.l-pad.r, ih=H-pad.t-pad.b;
+  const max=Math.max(0.0001,...hourly.map(b=>b.kwh))*1.15;
+  g.strokeStyle=C.grid; g.fillStyle=C.tx;
+  g.font="10px ui-monospace,monospace"; g.textAlign="right";
+  for(let i=0;i<=3;i++){
+    const v=max/3*i, y=Math.round(pad.t+ih-v/max*ih)+.5;
+    g.beginPath(); g.moveTo(pad.l,y); g.lineTo(W-pad.r,y); g.stroke();
+    g.fillText(v.toFixed(2), pad.l-7, y+3);
+  }
+  const bw=iw/24, pw=Math.max(3,bw-5);
+  hourly.forEach(b=>{
+    const x=pad.l+b.h*bw+(bw-pw)/2, h=b.kwh/max*ih, y=pad.t+ih-h;
+    if(b.kwh>0){
+      const gr=g.createLinearGradient(0,y,0,pad.t+ih);
+      gr.addColorStop(0,C.acc); gr.addColorStop(1,hexA(C.acc2,.6));
+      g.fillStyle=gr;
+    } else g.fillStyle=C.track;
+    const r=Math.min(3,pw/2), hh=Math.max(b.kwh>0?2:2,h);
+    g.beginPath(); g.roundRect(x,pad.t+ih-hh,pw,hh,[r,r,0,0]); g.fill();
+    if(b.coverage<0.98&&b.kwh>0){
+      g.fillStyle=hexA(cv_("--card"),.55);
+      g.beginPath(); g.roundRect(x,pad.t+ih-hh,pw,hh*(1-b.coverage),[r,r,0,0]); g.fill();
+    }
+  });
+  g.fillStyle=C.tx; g.textAlign="center";
+  for(let h=0;h<24;h+=3) g.fillText(String(h).padStart(2,"0"), pad.l+h*bw+bw/2, H-5);
+
+  cv.onmousemove=e=>{
+    const r=cv.getBoundingClientRect();
+    const h=Math.floor((e.clientX-r.left-pad.l)/bw);
+    if(h<0||h>23){hideTip();return;}
+    const b=hourly[h];
+    showTip(e,"<b>"+String(h).padStart(2,"0")+":00 – "+String(h).padStart(2,"0")+":59</b><br>"+
+      num(b.kwh,4)+" kWh · "+money(b.cost,4)+"<br>"+
+      (b.avg_w?"avg "+num(b.avg_w,0)+" W · peak "+num(b.peak,0)+" W<br>":"")+
+      "logged "+pct(b.coverage)+" of the hour");
+  };
+  cv.onmouseleave=hideTip;
+
+  // clicking an hour hands over to the Hours tab, opened on that hour
+  cv.style.cursor="pointer";
+  cv.onclick=e=>{
+    const r=cv.getBoundingClientRect();
+    const h=Math.floor((e.clientX-r.left-pad.l)/bw);
+    if(h<0||h>23||!hourly[h].kwh) return;
+    hideTip();
+    setTab("hours",true);
+    openHour(day.date,h);
+  };
+}
+
+/* ================= HOURS =================
+   Every hour on record, filtered server-side, with a day-by-hour grid and a
+   drill-down into what was actually running in any single hour. */
+let hoursData=null, hourShown=null, hourSeq=0, hoursTimer=null;
+
+function hourFilters(){
+  const p=new URLSearchParams();
+  const add=(k,v)=>{ if(v!==""&&v!=null) p.set(k,v); };
+  add("from",$("fFrom").value); add("to",$("fTo").value);
+  add("hfrom",$("fHFrom").value); add("hto",$("fHTo").value);
+  add("daytype",$("fDayType").value); add("app",$("fApp").value);
+  add("min_kwh",$("fMinKwh").value); add("sort",$("fSort").value);
+  return p.toString();
+}
+
+function initHourSelects(){
+  if($("fHFrom").options.length) return;
+  for(let h=0;h<24;h++){
+    const t=String(h).padStart(2,"0")+":00";
+    $("fHFrom").add(new Option(t,h)); $("fHTo").add(new Option(t,h));
+  }
+  $("fHFrom").value=0; $("fHTo").value=23;
+  ["fFrom","fTo","fHFrom","fHTo","fDayType","fApp","fMinKwh","fSort"].forEach(id=>{
+    $(id).addEventListener("change",()=>loadHours(true));
+  });
+  // typing a number should not fire a request per keystroke
+  $("fMinKwh").addEventListener("input",()=>{
+    clearTimeout(hoursTimer); hoursTimer=setTimeout(()=>loadHours(true),400);
+  });
+  $("fApp").addEventListener("change", syncMinLabel);
+  syncMinLabel();
+  $("hrReset").onclick=()=>{
+    $("fFrom").value=""; $("fTo").value=""; $("fHFrom").value=0; $("fHTo").value=23;
+    $("fDayType").value="all"; $("fApp").value=""; $("fMinKwh").value=""; $("fSort").value="time";
+    syncMinLabel();
+    loadHours(true);
+  };
+}
+
+// The "used at least" threshold applies to the chosen app when there is one,
+// and to the whole hour when there is not -- the label has to say which.
+function syncMinLabel(){
+  const a=$("fApp").value;
+  $("fMinLbl").textContent = a ? "That app used at least" : "Hour used at least";
+}
+
+async function loadHours(force){
+  initHourSelects();
+  syncMinLabel();
+  if(hoursData && !force) return renderHours(hoursData);
+  if(!hoursData) $("hrRows").innerHTML='<tr><td colspan="8" class="skel">loading...</td></tr>';
+  try{ hoursData=await api("/api/hours?"+hourFilters()); }
+  catch(e){ setErr(e.message); return; }
+  renderHours(hoursData);
+}
+
+function renderHours(d){
+  CUR.v=d.currency||CUR.v;
+  const hrs=d.hours||[], t=d.totals||{};
+
+  // app dropdown, filled once; whatever is selected stays selected
+  const sel=$("fApp");
+  if(sel.options.length<=1 && (d.known_apps||[]).length){
+    const keep=sel.value;
+    d.known_apps.forEach(a=>sel.add(new Option(a,a)));
+    sel.add(new Option("Idle baseline only","__baseline__"));
+    sel.value=keep;
+  }
+  if(d.first_day && !$("fFrom").min){ $("fFrom").min=$("fTo").min=d.first_day; }
+  if(d.last_day){ $("fFrom").max=$("fTo").max=d.last_day; }
+
+  $("hrTotals").innerHTML =
+    stat("Hours matched", t.hours||0, "out of every hour on record")+
+    stat("Energy in them", num(t.kwh,3)+" kWh", money(t.cost,3))+
+    stat("Average hour", num(t.avg_kwh,4)+" kWh", money((t.avg_kwh||0)*d.rate,4)+" each")+
+    stat("Heaviest hour", num(t.busiest,4)+" kWh", money((t.busiest||0)*d.rate,4));
+  $("hrCount").textContent = hrs.length ? hrs.length+" hour"+(hrs.length===1?"":"s") : "";
+
+  // ---- day-by-hour grid ----
+  const byDay={};
+  hrs.forEach(h=>{ (byDay[h.date]=byDay[h.date]||{})[h.hour]=h; });
+  const days=Object.keys(byDay).sort();
+  const max=Math.max(0.0001,...hrs.map(h=>h.kwh));
+  if(!days.length){
+    $("hrGrid").innerHTML='<div class="empty">No hours match these filters.</div>';
+  } else {
+    let g="";
+    days.forEach(day=>{
+      const first=byDay[day][Object.keys(byDay[day])[0]]||{};
+      g+="<div class='hrow'><span class='lab'>"+day.slice(5)+" "+(first.weekday||"")+"</span>";
+      for(let h=0;h<24;h++){
+        const c=byDay[day][h];
+        g+= c
+          ? "<div class='hcell"+(hourShown===day+"|"+h?" sel":"")+"' data-d='"+day+"' data-h='"+h+
+            "' style='background:"+heatColor(c.kwh,max)+"'></div>"
+          : "<div class='hcell off'></div>";
+      }
+      g+="</div>";
+    });
+    g+="<div class='haxis'>";
+    for(let h=0;h<24;h++) g+="<span>"+(h%3===0?String(h).padStart(2,"0"):"")+"</span>";
+    g+="</div>";
+    $("hrGrid").innerHTML=g;
+    $("hrGrid").querySelectorAll(".hcell[data-d]").forEach(el=>{
+      const c=byDay[el.dataset.d][+el.dataset.h];
+      el.onmouseenter=e=>showTip(e,"<b>"+c.date+" "+c.label+"</b><br>"+
+        num(c.kwh,4)+" kWh &middot; "+money(c.cost,4)+"<br>avg "+num(c.avg_w,0)+" W &middot; peak "+num(c.peak_w,0)+" W"+
+        (c.top_app?"<br>mostly "+esc(c.top_app)+" ("+pct(c.top_share)+")":"")+
+        (c.coverage<0.98?"<br>logged "+pct(c.coverage)+" of the hour":""));
+      el.onmousemove=moveTip; el.onmouseleave=hideTip;
+      el.onclick=()=>openHour(el.dataset.d,+el.dataset.h);
+    });
+  }
+
+  // ---- table ----
+  if(!hrs.length){
+    $("hrRows").innerHTML='<tr><td colspan="8" class="empty">Nothing matches. Try widening the filters.</td></tr>';
+    $("hourDetail").innerHTML=""; hourShown=null; return;
+  }
+  $("hrRows").innerHTML=hrs.map(h=>{
+    const id=h.date+"|"+h.hour;
+    return "<tr class='click"+(hourShown===id?" sel":"")+"' data-d='"+h.date+"' data-h='"+h.hour+"'>"+
+    "<td><div class='name'><span>"+h.date+" "+h.label+"</span><i class='chip'>"+h.weekday+"</i></div></td>"+
+    "<td>"+num(h.kwh,4)+" kWh</td>"+
+    "<td style='color:var(--acc);font-weight:600'>"+money(h.cost,4)+"</td>"+
+    "<td>"+num(h.avg_w,0)+" W</td>"+
+    "<td>"+num(h.peak_w,0)+" W</td>"+
+    "<td class='hide-s' style='color:var(--tx3)'>"+num(h.min_w,0)+" W</td>"+
+    "<td><div class='cov'><span style='color:var(--tx3)'>"+pct(h.coverage)+"</span>"+
+      "<div class='bar'><i style='width:"+(h.coverage*100)+"%;background:"+
+      (h.coverage>.95?"var(--ok)":h.coverage>.4?"var(--warn)":"var(--bad)")+"'></i></div></div></td>"+
+    "<td style='color:var(--tx3)'>"+(h.match
+        ? esc(h.match.app)+" "+pct(h.match.share)
+        : (h.top_app?esc(h.top_app)+" "+pct(h.top_share)
+                    : "<span style='opacity:.6'>no app data</span>"))+"</td></tr>";
+  }).join("");
+  $("hrRows").querySelectorAll("tr.click").forEach(tr=>
+    tr.onclick=()=>openHour(tr.dataset.d,+tr.dataset.h));
+
+  const want = hourShown || (hrs[0].date+"|"+hrs[0].hour);
+  const parts = want.split("|");
+  if(hourShown!==want || !$("hourDetail").children.length) openHour(parts[0],+parts[1],true);
+}
+
+async function openHour(date,h,quiet){
+  const id=date+"|"+h;
+  const switching = hourShown!==id;
+  hourShown=id;
+  document.querySelectorAll("#hrRows tr,.hcell").forEach(el=>
+    el.classList.toggle("sel", el.dataset.d===date && +el.dataset.h===h));
+  const seq=++hourSeq;
+  if(switching) $("hourDetail").innerHTML='<div class="card"><div class="skel">loading...</div></div>';
+  let d;
+  try{ d=await api("/api/hour?d="+encodeURIComponent(date)+"&h="+h); }
+  catch(e){
+    if(seq===hourSeq&&switching)
+      $("hourDetail").innerHTML='<div class="card"><div class="empty">'+esc(e.message)+'</div></div>';
+    return;
+  }
+  if(seq!==hourSeq) return;
+  CUR.v=d.currency||CUR.v;
+
+  const apps=(d.apps||[]).filter(a=>a.kwh>0);
+  const maxA=Math.max(0.00001,...apps.map(a=>a.kwh));
+  const appTable = apps.length
+    ? "<table><thead><tr><th>What was running</th><th>Energy</th><th>Cost</th><th>Share</th>"+
+      "<th class='hide-s'>Avg</th><th class='hide-s'>Peak</th><th class='hide-s'>Active</th></tr></thead><tbody>"+
+      apps.map(a=>"<tr"+(a.baseline?" class='muted'":"")+"><td style='width:36%'>"+
+        "<div class='name'><span>"+esc(a.app)+"</span>"+
+        (a.gpu_share>0.5&&!a.baseline?"<i class='chip' style='color:var(--gpu);border-color:rgba(124,156,255,.35)'>GPU</i>":"")+
+        (a.pids>1?"<i class='chip'>"+a.pids+" proc</i>":"")+"</div>"+
+        "<div class='bar' style='margin-top:6px'><i style='width:"+(a.kwh/maxA*100)+"%;background:"+
+          (a.baseline?"var(--base)":"var(--accbar)")+"'></i></div></td>"+
+        "<td>"+num(a.kwh,5)+" kWh</td>"+
+        "<td style='color:var(--acc)'>"+money(a.cost,5)+"</td>"+
+        "<td>"+(a.share*100).toFixed(1)+"%</td>"+
+        "<td class='hide-s'>"+num(a.avg_w,1)+" W</td>"+
+        "<td class='hide-s'>"+num(a.peak_w,1)+" W</td>"+
+        "<td class='hide-s' style='color:var(--tx3)'>"+hrs(a.active_h)+"</td></tr>").join("")+"</tbody></table>"
+    : '<div class="empty">No per-app samples in this hour.</div>';
+
+  const gaps = d.gaps.length
+    ? d.gaps.map(g=>"<span class='gap'>"+g.from+" &rarr; "+g.to+" &middot; "+g.minutes+" min</span>").join("")
+    : "<span class='gap' style='color:var(--ok);border-color:rgba(61,220,151,.3)'>logged continuously</span>";
+
+  $("hourDetail").innerHTML =
+    '<div class="card" style="margin-bottom:14px">'+
+      '<div class="hh"><h2>'+esc(d.label)+' &middot; '+esc(d.weekday)+'</h2>'+
+      '<div class="sub">'+d.samples+' samples &middot; logged '+d.logged_min+' of 60 min</div></div>'+
+      '<div class="grid g4" style="margin-bottom:18px">'+
+        stat("Energy", num(d.kwh,4)+" kWh", "coverage "+pct(d.coverage))+
+        stat("Cost", money(d.cost,5), "at "+num(d.rate,3)+" "+CUR.v+"/kWh")+
+        stat("Average draw", num(d.avg_w,0)+" W", "lowest "+num(d.min_w,0)+" W")+
+        stat("Peak", num(d.peak_w,0)+" W", "at "+(d.peak_at||"&mdash;"))+
+      '</div>'+
+      '<div class="lbl" style="margin-bottom:9px">Minute by minute</div>'+
+      '<canvas id="hourChart2" height="160"></canvas>'+
+      '<div class="lbl" style="margin:18px 0 4px">Unlogged stretches</div><div>'+gaps+'</div>'+
+    '</div>'+
+    '<div class="card">'+appTable+'</div>';
+
+  lastHour=d;
+  lineChart($("hourChart2"), d.series||[], {height:160,gpu:true});
+  if(!quiet) $("hourDetail").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+/* ================= APPS ================= */
+let appRange="today";
+$("appRange").onclick=e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  appRange=b.dataset.r;
+  $("appRange").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  loadApps(true);
+};
+async function loadApps(force){
+  if($("appsBody").dataset.r===appRange && !force) return;
+  $("appsBody").innerHTML='<div class="skel">loading…</div>';
+  let d;
+  try{ d=await api("/api/apps?range="+appRange); }
+  catch(e){ setErr(e.message); return; }
+  $("appsBody").dataset.r=appRange;
+  CUR.v=d.currency||CUR.v;
+  const apps=(d.apps||[]).filter(a=>a.kwh>0);
+  const real=apps.filter(a=>!a.baseline);
+  const realKwh=real.reduce((s,a)=>s+a.kwh,0);
+  $("appsTotals").innerHTML=
+    stat("Total measured", num(d.total_kwh,3)+" kWh", money(d.total_cost,3)+" over "+d.days+" day"+(d.days===1?"":"s"))+
+    stat("Charged to apps", num(realKwh,3)+" kWh", money(realKwh*d.rate,3)+" · "+pct(d.total_kwh?realKwh/d.total_kwh:0)+" of the total")+
+    stat("Idle baseline", num(d.total_kwh-realKwh,3)+" kWh", "just being switched on");
+  if(!apps.length){
+    $("appsBody").innerHTML='<div class="empty">No per-app data for this range yet.</div>'; return;
+  }
+  const max=Math.max(...apps.map(a=>a.kwh));
+  $("appsBody").innerHTML='<div style="overflow:auto" class="scroll"><table><thead><tr>'+
+    "<th>Application</th><th>Energy</th><th>Cost</th><th>Share</th>"+
+    "<th class='hide-s'>Avg draw</th><th class='hide-s'>Peak</th><th class='hide-s'>Active</th><th class='hide-s'>GPU</th>"+
+    "</tr></thead><tbody>"+apps.map(a=>
+    "<tr"+(a.baseline?" class='muted'":"")+"><td style='width:34%'>"+
+      "<div class='name'><span>"+esc(a.app)+"</span>"+
+      (a.pids>1?"<i class='chip'>"+a.pids+" proc</i>":"")+"</div>"+
+      "<div class='bar' style='margin-top:6px'><i style='width:"+(a.kwh/max*100)+"%;background:"+
+        (a.baseline?"var(--base)":"linear-gradient(90deg,var(--acc),var(--acc2))")+"'></i></div></td>"+
+    "<td>"+num(a.kwh,4)+" kWh</td>"+
+    "<td style='color:var(--acc);font-weight:600'>"+money(a.cost,4)+"</td>"+
+    "<td>"+(a.share*100).toFixed(1)+"%</td>"+
+    "<td class='hide-s'>"+num(a.avg_w,1)+" W</td>"+
+    "<td class='hide-s'>"+num(a.peak_w,1)+" W</td>"+
+    "<td class='hide-s' style='color:var(--tx3)'>"+hrs(a.active_h)+"</td>"+
+    "<td class='hide-s' style='color:var(--tx3)'>"+(a.baseline?"—":pct(a.gpu_share))+"</td></tr>").join("")+
+    "</tbody></table></div>";
+}
+
+/* ================= poll ================= */
+async function tick(){
+  try{ renderLive(await api("/api/data")); }
+  catch(e){
+    setErr("Cannot reach the dashboard service — is dashboard.py running? ("+e.message+")");
+    $("livePill").classList.remove("on");
+    $("livePill").querySelector("span").textContent="offline";
+  }
+}
+booted=true;
+setTab(location.hash.slice(1)||"live",false);
+tick();
+setInterval(tick, 5000);
+
+// History and Apps change slowly; refresh them on their own gentle timer, and
+// only while their tab is actually on screen.
+setInterval(()=>{
+  if(document.hidden) return;
+  if(tab==="history" && hist){ loadHistory(true); if(selDay) openDay(selDay,true); }
+  if(tab==="hours") loadHours(true);
+  if(tab==="apps") loadApps(true);
+}, 60000);
+addEventListener("resize", ()=>{ drawLive(); if(selDay&&$("hourChart")) openDay(selDay,true); });
+addEventListener("keydown", e=>{
+  if(e.key>="1"&&e.key<="4") document.querySelectorAll("nav button")[+e.key-1].click();
+});
+</script>
+</body>
+</html>
