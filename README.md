@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/banner.png" alt="Nabatt" width="100%">
+  <img src="docs/banner.jpg" alt="Nabatt" width="100%">
 </p>
 
 # Nabatt · نبط
@@ -138,6 +138,27 @@ Where the electricity went over today / 7 days / 30 days / all time.
 
 *(the top rows only — the full list runs to every process that drew measurable
 power in the range)*
+
+---
+
+<p align="center">
+  <img src="docs/dark-band.jpg" alt="Light and dark" width="100%">
+</p>
+
+Every screenshot above is the light theme, which is the default. The **Light /
+Dark / Auto** control in the top right switches it, and *Auto* follows Windows.
+Nothing about the data changes — the charts are `<canvas>`, and they read their
+colours from the same CSS custom properties as the rest of the page each time
+they draw, so a theme switch repaints them rather than leaving them stranded in
+the old palette.
+
+<p align="center">
+  <img src="docs/screenshots/live-dark.png" alt="The Live tab in the dark theme" width="100%">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/hour-detail-dark.png" alt="An hour opened in the dark theme" width="100%">
+</p>
 
 ---
 
@@ -297,13 +318,28 @@ asleep reads as a gap, not as a low average.
 
 The screenshots are the live app, captured from the running instance through
 the Chrome DevTools Protocol so that a specific day and hour could be opened
-before the shot, and the viewport sized to the whole page in one piece.
+before the shot, and the viewport sized to the whole page in one piece. They
+are PNG, palette-quantised — flat UI colour survives that untouched.
 
-The banner is generated locally — **Qwen-Image 2512** (Apache 2.0) on an RTX
-3090 via ComfyUI, 1536×640, 60 s. The wordmark is laid over it in HTML and
-rendered in Chrome rather than drawn with Pillow, because Pillow here is built
-without libraqm and would set **نبط** as disconnected letters in the wrong
-order.
+The three photographic plates are generated locally: **Qwen-Image 2512**
+(Apache 2.0, so it can ship in a repo) on an RTX 3090 via ComfyUI, ~55 s each.
+
+| | Plate | Used for |
+|---|---|---|
+| `docs/banner.jpg` | the Siq at golden hour, 1536×640 | the header |
+| `docs/dark-band.jpg` | Wadi Rum under the Milky Way, 1536×640 | the light/dark section |
+| `docs/social-card.jpg` | Al-Khazneh at blue hour, 1280×640 | GitHub's link preview |
+
+They are JPEG, not PNG: photographs with smooth gradients cost about five times
+as much as PNG for no visible gain (banner 920 KB → 191 KB at q92).
+
+`social-card.jpg` is sized for GitHub's social preview — the card people see
+when the repository is linked in Slack or on a timeline. GitHub only accepts it
+through the web UI: **Settings → General → Social preview → Upload an image**.
+
+Every wordmark is laid over its plate in HTML and rendered in Chrome rather
+than drawn with Pillow, because Pillow here is built without libraqm and would
+set **نبط** as three disconnected letters in the wrong order.
 
 One thing to know if you regenerate it: this box's cuDNN raises
 `CUDNN_STATUS_SUBLIBRARY_VERSION_MISMATCH` for the kernels torch asks of it,
